@@ -1,30 +1,25 @@
 package slices
 
 func Sum(elements []int) int {
-	sum := 0
-	for _, element := range elements {
-		sum += element
-	}
-	return sum
+	sum := func(result, item int) int { return result + item }
+	return Reduce(elements, sum, 0)
 }
 
 func SumAll(slices [][]int) []int {
-	sums := make([]int, len(slices))
-	for idx, slice := range slices {
-		sums[idx] = Sum(slice)
+	sumAll := func(result, item []int) []int {
+		return append(result, Sum(item))
 	}
-	return sums
+	return Reduce(slices, sumAll, []int{})
 }
 
 func SumAllTails(slices [][]int) []int {
-	sums := make([]int, len(slices))
-	for idx, slice := range slices {
-		if len(slice) < 1 {
-			sums[idx] = 0
+	sumTail := func(result, item []int) []int {
+		if len(item) < 1 {
+			return append(result, 0)
 		} else {
-			tail := slice[1:]
-			sums[idx] = Sum(tail)
+			tail := item[1:]
+			return append(result, Sum(tail))
 		}
 	}
-	return sums
+	return Reduce(slices, sumTail, []int{})
 }
