@@ -69,24 +69,3 @@ func TestStack(t *testing.T) {
 		AssertEqual(t, firstRemoved+secondRemoved, 3)
 	})
 }
-
-func AssertNotEqual[T comparable](t *testing.T, lhs, rhs T) {
-	t.Helper()
-	if lhs == rhs {
-		t.Errorf("expected not equals but %+v equal %+v", lhs, rhs)
-	}
-}
-
-func AssertEqual[T comparable](t *testing.T, lhs, rhs T) {
-	t.Helper()
-	if lhs != rhs {
-		t.Errorf("expected equals but %+v not equal %+v", lhs, rhs)
-	}
-}
-
-func AssertTrue(t *testing.T, got bool) {
-	t.Helper()
-	if !got {
-		t.Errorf("got %v, want true", got)
-	}
-}
