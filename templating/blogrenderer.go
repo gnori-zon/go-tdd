@@ -62,18 +62,18 @@ func newHref(title string) string {
 }
 
 type postData struct {
-	title       string
-	description string
-	tags        []string
-	body        template.HTML
+	Title       string
+	Description string
+	Tags        []string
+	Body        template.HTML
 }
 
 func newPostData(post blogposts.Post) postData {
 	return postData{
-		title:       post.Title,
-		description: post.Description,
-		tags:        post.Tags,
-		body:        template.HTML(mdToHTML(post.Body)),
+		Title:       post.Title,
+		Description: post.Description,
+		Tags:        post.Tags,
+		Body:        template.HTML(mdToHTML(post.Body)),
 	}
 }
 
