@@ -1,7 +1,7 @@
 package slices
 
 import (
-	"github.com/gnori-zon/go-tdd/generics"
+	"github.com/gnori-zon/go-tdd/generics/assert"
 	"testing"
 )
 
@@ -11,7 +11,7 @@ func TestReduce(t *testing.T) {
 			return x * y
 		}
 
-		generics.AssertEqual(t, Reduce([]int{1, 2, 3}, multiply, 1), 6)
+		assert.Equal(t, Reduce([]int{1, 2, 3}, multiply, 1), 6)
 	})
 
 	t.Run("concatenate strings", func(t *testing.T) {
@@ -19,6 +19,6 @@ func TestReduce(t *testing.T) {
 			return x + y
 		}
 
-		generics.AssertEqual(t, Reduce([]string{"a", "b", "c"}, concatenate, ""), "abc")
+		assert.Equal(t, Reduce([]string{"a", "b", "c"}, concatenate, ""), "abc")
 	})
 }

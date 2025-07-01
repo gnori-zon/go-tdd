@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option go_package = "github.com/gnori-zon/go-tdd/scalingacceptancetests/adapters/grpcserver";
+
+package grpcserver;
+
+service Greeter {
+  rpc Greet (GreetRequest) returns (GreetReply) {}
+  rpc Curse (CurseRequest) returns (CurseReply) {}
+}
+
+message GreetRequest {
+  string name = 1;
+}
+
+message GreetReply {
+  string message = 1;
+}
+
+message CurseRequest {
+  string name = 1;
+}
+
+message CurseReply {
+  string message = 1;
+}
