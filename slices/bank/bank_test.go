@@ -1,7 +1,7 @@
 package bank
 
 import (
-	"github.com/gnori-zon/go-tdd/generics"
+	"github.com/gnori-zon/go-tdd/generics/assert"
 	"testing"
 )
 
@@ -21,7 +21,7 @@ func TestBadBank(t *testing.T) {
 		return NewBalanceFor(transactions, account).Balance
 	}
 
-	generics.AssertEqual(t, newBalanceFor(riya), 200)
-	generics.AssertEqual(t, newBalanceFor(chris), 0)
-	generics.AssertEqual(t, newBalanceFor(adil), 175)
+	assert.Equal(t, newBalanceFor(riya), 200)
+	assert.Equal(t, newBalanceFor(chris), 0)
+	assert.Equal(t, newBalanceFor(adil), 175)
 }
