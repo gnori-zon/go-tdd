@@ -26,7 +26,7 @@ func (s *StubPlayerStore) SaveWin(name string) {
 	s.wins = append(s.wins, name)
 }
 
-func (s *StubPlayerStore) GetLeague() []Player {
+func (s *StubPlayerStore) GetLeague() League {
 	return s.league
 }
 
@@ -86,10 +86,13 @@ func TestStoreWins(t *testing.T) {
 }
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	server := NewPlayerServer(NewInMemoryPlayerStore())
+	database, cleanDatabase := createTempFile(t, []Player{})
+	defer cleanDatabase()
+	store, _ := NewFileSystemPlayerStore(database)
+	server := NewPlayerServer(store)
 	league := []Player{
-		{Name: "Pepper", Wins: 12},
 		{Name: "Bob", Wins: 40},
+		{Name: "Pepper", Wins: 12},
 	}
 
 	for _, player := range league {
@@ -112,7 +115,10 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 }
 
 func TestConcurrentlyRecordingWinsAndRetrievingThem(t *testing.T) {
-	server := NewPlayerServer(NewInMemoryPlayerStore())
+	database, cleanDatabase := createTempFile(t, []Player{})
+	defer cleanDatabase()
+	store, _ := NewFileSystemPlayerStore(database)
+	server := NewPlayerServer(store)
 	player := "Pepper"
 
 	want := 1_000
