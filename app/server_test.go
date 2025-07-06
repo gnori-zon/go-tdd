@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strconv"
 	"sync"
 	"testing"
@@ -12,6 +14,7 @@ import (
 type StubPlayerStore struct {
 	scores map[string]int
 	wins   []string
+	league []Player
 }
 
 func (s *StubPlayerStore) GetPlayerScore(name string) (score int, ok bool) {
@@ -23,8 +26,12 @@ func (s *StubPlayerStore) SaveWin(name string) {
 	s.wins = append(s.wins, name)
 }
 
+func (s *StubPlayerStore) GetLeague() []Player {
+	return s.league
+}
+
 func TestGETPlayers(t *testing.T) {
-	server := &PlayerServer{&StubPlayerStore{scores: map[string]int{"Pepper": 20, "Bob": 10}, wins: []string{}}}
+	server := NewPlayerServer(&StubPlayerStore{scores: map[string]int{"Pepper": 20, "Bob": 10}, wins: []string{}})
 	cases := []struct {
 		name      string
 		wantScore int
@@ -60,7 +67,7 @@ func TestGETPlayers(t *testing.T) {
 
 func TestStoreWins(t *testing.T) {
 	stubStore := &StubPlayerStore{scores: map[string]int{}, wins: []string{}}
-	server := &PlayerServer{stubStore}
+	server := NewPlayerServer(stubStore)
 
 	wantCountWins := 0
 
@@ -79,21 +86,33 @@ func TestStoreWins(t *testing.T) {
 }
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	server := NewPlayerServer()
-	player := "Pepper"
+	server := NewPlayerServer(NewInMemoryPlayerStore())
+	league := []Player{
+		{Name: "Pepper", Wins: 12},
+		{Name: "Bob", Wins: 40},
+	}
 
-	server.ServeHTTP(httptest.NewRecorder(), newSaveWinRequest(player))
-	server.ServeHTTP(httptest.NewRecorder(), newSaveWinRequest(player))
-	server.ServeHTTP(httptest.NewRecorder(), newSaveWinRequest(player))
+	for _, player := range league {
+		for i := 0; i < player.Wins; i++ {
+			server.ServeHTTP(httptest.NewRecorder(), newSaveWinRequest(player.Name))
+		}
+
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, newGetScoreRequest(player.Name))
+		assertStatus(t, response, http.StatusOK)
+		assertScore(t, response, player.Wins)
+	}
 
 	response := httptest.NewRecorder()
-	server.ServeHTTP(response, newGetScoreRequest(player))
+	server.ServeHTTP(response, newGetLeagueRequest())
+
+	assertEqualLeagues(t, response, league)
 	assertStatus(t, response, http.StatusOK)
-	assertScore(t, response, 3)
+	assertContentType(t, response, jsonContentType)
 }
 
 func TestConcurrentlyRecordingWinsAndRetrievingThem(t *testing.T) {
-	server := NewPlayerServer()
+	server := NewPlayerServer(NewInMemoryPlayerStore())
 	player := "Pepper"
 
 	want := 1_000
@@ -111,6 +130,57 @@ func TestConcurrentlyRecordingWinsAndRetrievingThem(t *testing.T) {
 	server.ServeHTTP(response, newGetScoreRequest(player))
 	assertStatus(t, response, http.StatusOK)
 	assertScore(t, response, want)
+}
+
+func TestLeague(t *testing.T) {
+	t.Run("return league list", func(t *testing.T) {
+		wantLeague := []Player{
+			{Name: "Pepper", Wins: 12},
+			{Name: "Bob", Wins: 20},
+		}
+
+		server := NewPlayerServer(&StubPlayerStore{scores: map[string]int{}, wins: []string{}, league: wantLeague})
+
+		request := newGetLeagueRequest()
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertEqualLeagues(t, response, wantLeague)
+		assertContentType(t, response, jsonContentType)
+		assertStatus(t, response, http.StatusOK)
+	})
+}
+
+func assertEqualLeagues(t *testing.T, response *httptest.ResponseRecorder, want []Player) {
+	t.Helper()
+	got := getLeagueFromResponse(t, response)
+	if !slices.Equal(want, got) {
+		t.Errorf("want league %v, got %v", want, got)
+	}
+}
+
+func newGetLeagueRequest() *http.Request {
+	req, _ := http.NewRequest("GET", "/league", nil)
+	return req
+}
+
+func getLeagueFromResponse(t *testing.T, response *httptest.ResponseRecorder) []Player {
+	t.Helper()
+	var got []Player
+	err := json.NewDecoder(response.Body).Decode(&got)
+	if err != nil {
+		t.Fatalf("error decoding league response: %v", err)
+	}
+	return got
+}
+
+func assertContentType(t testing.TB, response *httptest.ResponseRecorder, want string) {
+	t.Helper()
+	contentType := response.Header().Get("Content-Type")
+	if contentType != want {
+		t.Errorf("Content-Type is %q, want %q", contentType, want)
+	}
 }
 
 func newSaveWinRequest(bobName string) *http.Request {
