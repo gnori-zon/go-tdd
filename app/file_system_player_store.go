@@ -1,4 +1,4 @@
-package main
+package poker
 
 import (
 	"cmp"
@@ -14,6 +14,19 @@ type FileSystemPlayerStore struct {
 	database *json.Encoder
 	league   League
 	mu       sync.Mutex
+}
+
+func NewFileSystemPlayerStoreFromFile(databasePath string) (store *FileSystemPlayerStore, close func(), err error) {
+	database, err := os.OpenFile(databasePath, os.O_RDWR|os.O_CREATE, 0666)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("problem opening %s %v", databasePath, err)
+	}
+	close = func() {
+		_ = database.Close()
+	}
+	store, err = NewFileSystemPlayerStore(database)
+	return
 }
 
 func NewFileSystemPlayerStore(database *os.File) (*FileSystemPlayerStore, error) {
