@@ -1,4 +1,4 @@
-package main
+package poker
 
 type PlayerStore interface {
 	GetPlayerScore(player string) (score int, ok bool)

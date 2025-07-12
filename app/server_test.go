@@ -1,4 +1,4 @@
-package main
+package poker
 
 import (
 	"encoding/json"
@@ -11,27 +11,8 @@ import (
 	"testing"
 )
 
-type StubPlayerStore struct {
-	scores map[string]int
-	wins   []string
-	league []Player
-}
-
-func (s *StubPlayerStore) GetPlayerScore(name string) (score int, ok bool) {
-	score, ok = s.scores[name]
-	return
-}
-
-func (s *StubPlayerStore) SaveWin(name string) {
-	s.wins = append(s.wins, name)
-}
-
-func (s *StubPlayerStore) GetLeague() League {
-	return s.league
-}
-
 func TestGETPlayers(t *testing.T) {
-	server := NewPlayerServer(&StubPlayerStore{scores: map[string]int{"Pepper": 20, "Bob": 10}, wins: []string{}})
+	server := NewPlayerServer(&StubPlayerStore{Scores: map[string]int{"Pepper": 20, "Bob": 10}, Wins: []string{}})
 	cases := []struct {
 		name      string
 		wantScore int
@@ -66,7 +47,7 @@ func TestGETPlayers(t *testing.T) {
 }
 
 func TestStoreWins(t *testing.T) {
-	stubStore := &StubPlayerStore{scores: map[string]int{}, wins: []string{}}
+	stubStore := &StubPlayerStore{Scores: map[string]int{}, Wins: []string{}}
 	server := NewPlayerServer(stubStore)
 
 	wantCountWins := 0
@@ -80,7 +61,7 @@ func TestStoreWins(t *testing.T) {
 			server.ServeHTTP(pepperResponse, request)
 
 			assertStatus(t, pepperResponse, http.StatusAccepted)
-			assertSavedWin(t, stubStore.wins, wantCountWins, name)
+			AssertSavedWin(t, stubStore.Wins, wantCountWins, name)
 		})
 	}
 }
@@ -145,7 +126,7 @@ func TestLeague(t *testing.T) {
 			{Name: "Bob", Wins: 20},
 		}
 
-		server := NewPlayerServer(&StubPlayerStore{scores: map[string]int{}, wins: []string{}, league: wantLeague})
+		server := NewPlayerServer(&StubPlayerStore{Scores: map[string]int{}, Wins: []string{}, League: wantLeague})
 
 		request := newGetLeagueRequest()
 		response := httptest.NewRecorder()
@@ -197,13 +178,6 @@ func newSaveWinRequest(bobName string) *http.Request {
 func newGetScoreRequest(name string) *http.Request {
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/players/%s", name), nil)
 	return req
-}
-
-func assertSavedWin(t testing.TB, wins []string, wantCountWins int, name string) {
-	t.Helper()
-	if len(wins) != wantCountWins || wins[wantCountWins-1] != name {
-		t.Errorf("store wins for %q not stored", name)
-	}
 }
 
 func assertScore(t testing.TB, response *httptest.ResponseRecorder, wantScore int) {
