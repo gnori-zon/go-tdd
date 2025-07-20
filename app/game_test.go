@@ -1,24 +1,23 @@
-package cli
+package poker
 
 import (
 	"fmt"
-	poker "github.com/gnori-zon/go-tdd/app"
-	cli2 "github.com/gnori-zon/go-tdd/app/cli"
+	"io"
 	"testing"
 	"time"
 )
 
-var dummyBlindAlerter = &poker.SpyBlindAlerter{}
-var dummyPlayerStore = &poker.StubPlayerStore{}
+var dummyBlindAlerter = &SpyBlindAlerter{}
+var dummyPlayerStore = &StubPlayerStore{}
 
 func TestGame_Start(t *testing.T) {
 	t.Run("it schedules printing of blind values for 5 players", func(t *testing.T) {
-		blindAlerter := &poker.SpyBlindAlerter{}
-		game := cli2.NewGame(dummyPlayerStore, blindAlerter)
+		blindAlerter := &SpyBlindAlerter{}
+		game := NewGame(dummyPlayerStore, blindAlerter)
 
-		game.Start(5)
+		game.Start(5, io.Discard)
 
-		wantAlerts := []poker.Alert{
+		wantAlerts := []Alert{
 			{0 * time.Second, 100},
 			{10 * time.Minute, 200},
 			{20 * time.Minute, 300},
@@ -36,12 +35,12 @@ func TestGame_Start(t *testing.T) {
 	})
 
 	t.Run("it schedules printing of blind values for 7 players", func(t *testing.T) {
-		blindAlerter := &poker.SpyBlindAlerter{}
-		game := cli2.NewGame(dummyPlayerStore, blindAlerter)
+		blindAlerter := &SpyBlindAlerter{}
+		game := NewGame(dummyPlayerStore, blindAlerter)
 
-		game.Start(7)
+		game.Start(7, io.Discard)
 
-		wantAlerts := []poker.Alert{
+		wantAlerts := []Alert{
 			{0 * time.Second, 100},
 			{12 * time.Minute, 200},
 			{24 * time.Minute, 300},
@@ -53,15 +52,15 @@ func TestGame_Start(t *testing.T) {
 }
 
 func TestGame_Finish(t *testing.T) {
-	store := &poker.StubPlayerStore{}
-	game := cli2.NewGame(store, dummyBlindAlerter)
+	store := &StubPlayerStore{}
+	game := NewGame(store, dummyBlindAlerter)
 	winner := "Ruth"
 
 	game.Finish(winner)
-	poker.AssertSavedWin(t, store.Wins, 1, winner)
+	AssertSavedWin(t, store.Wins, 1, winner)
 }
 
-func AssertPresentBlindAlerts(t *testing.T, wantAlerts, gotAlerts []poker.Alert) {
+func AssertPresentBlindAlerts(t *testing.T, wantAlerts, gotAlerts []Alert) {
 	t.Helper()
 	for i, want := range wantAlerts {
 		t.Run(fmt.Sprint(want), func(t *testing.T) {
@@ -71,7 +70,7 @@ func AssertPresentBlindAlerts(t *testing.T, wantAlerts, gotAlerts []poker.Alert)
 			}
 
 			got := gotAlerts[i]
-			poker.AssertEqualAlert(t, got, want)
+			AssertEqualAlert(t, got, want)
 		})
 	}
 }

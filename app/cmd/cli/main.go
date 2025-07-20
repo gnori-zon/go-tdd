@@ -18,7 +18,7 @@ func main() {
 		log.Fatalf("problem create store %v", err)
 	}
 	defer close()
-	game := cli.NewGame(store, cli.BlindAlerterFunc(cli.StdOutBlindAlerter))
+	game := poker.NewGame(store, poker.BlindAlerterFunc(poker.Alerter))
 	cliGame := cli.NewCLI(os.Stdin, os.Stdout, game)
 	cliGame.PlayPoker()
 }

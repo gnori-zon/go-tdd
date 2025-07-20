@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"fmt"
+	"github.com/gnori-zon/go-tdd/app"
 	"io"
 	"strconv"
 	"strings"
@@ -11,10 +12,10 @@ import (
 type CLI struct {
 	in   *bufio.Scanner
 	out  io.Writer
-	game Game
+	game poker.Game
 }
 
-func NewCLI(in io.Reader, out io.Writer, game Game) *CLI {
+func NewCLI(in io.Reader, out io.Writer, game poker.Game) *CLI {
 	return &CLI{
 		bufio.NewScanner(in),
 		out,
@@ -36,7 +37,7 @@ func (cli *CLI) PlayPoker() {
 		_, _ = fmt.Fprint(cli.out, BadPlayerInputErrMsg)
 		return
 	}
-	cli.game.Start(numberOfPlayers)
+	cli.game.Start(numberOfPlayers, cli.out)
 
 	winnerLine := cli.readLine()
 	winner, ok := extractWinner(winnerLine)

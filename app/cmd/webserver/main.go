@@ -14,6 +14,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("problem create store %v", err)
 	}
-	server := poker.NewPlayerServer(store)
+	alerter := poker.BlindAlerterFunc(poker.Alerter)
+	server, err := poker.NewPlayerServer(store, poker.NewGame(store, alerter))
+	if err != nil {
+		log.Fatalf("problem create server %v", err)
+	}
 	log.Fatal(http.ListenAndServe(":8080", server))
 }
