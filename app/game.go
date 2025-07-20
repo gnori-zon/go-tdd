@@ -1,30 +1,30 @@
-package cli
+package poker
 
 import (
-	poker "github.com/gnori-zon/go-tdd/app"
+	"io"
 	"time"
 )
 
 type Game interface {
-	Start(numberOfPlayers int)
+	Start(numberOfPlayers int, alertDestination io.Writer)
 	Finish(winner string)
 }
 
 type TexasHoldem struct {
-	store        poker.PlayerStore
+	store        PlayerStore
 	blindAlerter BlindAlerter
 }
 
-func NewGame(store poker.PlayerStore, blindAlerter BlindAlerter) *TexasHoldem {
+func NewGame(store PlayerStore, blindAlerter BlindAlerter) *TexasHoldem {
 	return &TexasHoldem{store, blindAlerter}
 }
 
-func (g TexasHoldem) Start(numberOfPlayers int) {
+func (g TexasHoldem) Start(numberOfPlayers int, alertDestination io.Writer) {
 	blinds := []int{100, 200, 300, 400, 500, 600, 800, 1000, 2000, 4000, 8000}
 	blindTime := 0 * time.Minute
 	timeToIncrement := time.Duration(5+numberOfPlayers) * time.Minute
 	for _, blind := range blinds {
-		g.blindAlerter.ScheduleAlertAt(blindTime, blind)
+		g.blindAlerter.ScheduleAlertAt(blindTime, blind, alertDestination)
 		blindTime += timeToIncrement
 	}
 }

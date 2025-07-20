@@ -2,6 +2,7 @@ package poker
 
 import (
 	"fmt"
+	"io"
 	"testing"
 	"time"
 )
@@ -49,8 +50,40 @@ type SpyBlindAlerter struct {
 	Alerts []Alert
 }
 
-func (s *SpyBlindAlerter) ScheduleAlertAt(scheduledAt time.Duration, amount int) {
+func (s *SpyBlindAlerter) ScheduleAlertAt(scheduledAt time.Duration, amount int, alertDestination io.Writer) {
 	s.Alerts = append(s.Alerts, Alert{scheduledAt, amount})
+}
+
+type SpyGame struct {
+	StartCalled  bool
+	FinishCalled bool
+	BlindAlert   []byte
+	StartWith    int
+	FinishWith   string
+}
+
+func (s *SpyGame) Start(numberOfPlayers int, alertDestination io.Writer) {
+	s.StartCalled = true
+	s.StartWith = numberOfPlayers
+	_, _ = alertDestination.Write(s.BlindAlert)
+}
+
+func (s *SpyGame) Finish(winner string) {
+	s.FinishCalled = true
+	s.FinishWith = winner
+}
+
+func AssertGameStartWith(t *testing.T, game *SpyGame, wantNumberOfPlayers int) {
+	if game.StartWith != wantNumberOfPlayers {
+		t.Errorf("want start with %d, but got %d", wantNumberOfPlayers, game.StartWith)
+	}
+}
+
+func AssertGameFinishWith(t testing.TB, game *SpyGame, wantName string) {
+	t.Helper()
+	if game.FinishWith != wantName {
+		t.Errorf("want finish game with %q, but got %q", wantName, game.FinishWith)
+	}
 }
 
 func AssertEqualAlert(t testing.TB, got Alert, want Alert) {
